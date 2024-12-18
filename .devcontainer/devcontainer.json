@@ -1,0 +1,11 @@
+{
+    "image":"mcr.microsoft.com/devcontainers/universal:2",
+    "postCreateCommand": "sudo apt update && sudo apt install -y xauth x11-apps python3-tk pybind11-dev",
+    // "postCreateCommand": [
+    //     "conda create --name py37 python=3.7 --yes",
+    //     "conda activate py37"
+    // ],
+    "remoteEnv": {
+        "DISPLAY": "localhost:10.0"
+    }
+}
