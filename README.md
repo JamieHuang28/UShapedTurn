@@ -11,3 +11,5 @@ when reference path is involved, it works like a virtual ending point
 
 construct scenarios: features, patterns
 devide function and implement
+
+add bokeh script for scenario generation
