@@ -15,15 +15,16 @@ from data_sources import RoadCurbDataSource, PoseDataSource, TurnAnchorDataSourc
 
 from planner import Plan
 from drive_path import DrivePath
+from bokeh.palettes import Spectral7
 
 # Set up data
 kDefaultTargetLaneWidth = 10.0
 road_curb_data_source = RoadCurbDataSource(kDefaultTargetLaneWidth)
 
-kDefaultStartPoint = EasyDict(dict(x=6.0, y=-2.0, yaw=np.pi/2))
+kDefaultStartPoint = EasyDict(dict(x=6.0, y=-2.0, yaw=np.pi/2, color=Spectral7[6]))
 start_pose_data_source = PoseDataSource(kDefaultStartPoint)
 
-kDefaultEndPoint = EasyDict(dict(x=-6.0, y = -2.0, yaw=-np.pi/2))
+kDefaultEndPoint = EasyDict(dict(x=-6.0, y = -4.0, yaw=-np.pi/2, color=Spectral7[0]))
 end_pose_data_source = PoseDataSource(kDefaultEndPoint)
 
 turn_anchor_data_source = TurnAnchorDataSource()
@@ -63,8 +64,8 @@ def update_data(attrname, old, new):
 
     start_pose = EasyDict(x=start_point_x.value, y=start_point_y.value, yaw=start_point_yaw.value)
     end_pose = EasyDict(x=end_point_x.value, y=end_point_y.value, yaw=end_point_yaw.value)
-    poses = Plan(start_pose, end_pose, drive_path)
-    traj_data_source.updateData(poses)
+    traj = Plan(start_pose, end_pose, drive_path)
+    traj_data_source.updateData(traj)
 
 for w in [target_lane_road_curb, start_point_x, start_point_y, start_point_yaw, end_point_x, end_point_y, end_point_yaw]:
     w.on_change('value', update_data)

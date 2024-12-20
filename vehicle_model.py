@@ -5,7 +5,7 @@ import numpy as np
 # from abc import ABC, abstractclassmethod
 
 class VehicleModel:
-    def __init__(self, wheel_base: float, max_delta: float):
+    def __init__(self, wheel_base = 3.0, max_delta = 0.5):
         self.wheel_base = wheel_base
         self.max_delta = max_delta
         self.pose = EasyDict({'x': 0.0, 'y': 0.0, 'yaw': 0.0})

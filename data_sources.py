@@ -4,6 +4,7 @@ import numpy as np
 from bokeh.models import ColumnDataSource
 
 from bokeh.models import Arrow, NormalHead, OpenHead, VeeHead
+from bokeh.palettes import Spectral7
 
 import math
 
@@ -21,13 +22,14 @@ class RoadCurbDataSource:
         return dict(x=self.x, y=self.y)
     
     def registerRender(self, plot):
-        plot.line('x', 'y', source=self.source, line_width=3, line_alpha=0.6)
+        plot.line('x', 'y', source=self.source, line_width=3, line_alpha=0.6, color="#0000ff")
 
 class PoseDataSource:
     def __init__(self, default_dict):
         self.x = default_dict.x
         self.y = default_dict.y
         self.yaw = default_dict.yaw
+        self.color = default_dict.color
         self.source = ColumnDataSource(data=self.get())
     
     def updateData(self, x, y, yaw):
@@ -40,7 +42,7 @@ class PoseDataSource:
         return dict(start_x=[self.x], start_y=[self.y], end_x=[self.x + math.cos(self.yaw)], end_y=[self.y+math.sin(self.yaw)])
     
     def registerRender(self, p):
-        p.add_layout(Arrow(end=NormalHead(size=15), source=self.source, x_start='start_x', y_start='start_y', x_end='end_x', y_end='end_y'))
+        p.add_layout(Arrow(end=NormalHead(size=10, fill_color=self.color, line_color=self.color), source=self.source, x_start='start_x', y_start='start_y', x_end='end_x', y_end='end_y'))
 
 
 from bokeh.models import Dot
@@ -63,40 +65,46 @@ class TurnAnchorDataSource:
         glyph = Dot(x="x", y="y", size="sizes", line_color="#dd1c77", fill_color=None)
         plot.add_glyph(self.source, glyph)
 
-
-from easydict import EasyDict
+from drive_path import DrivePath
 class DrivePathDataSource:
-    def __init__(self, drive_path):
+    def __init__(self, drive_path: DrivePath):
         self.drive_path = drive_path
         self.source = ColumnDataSource(self.get())
     
     def get(self):
-        xs, ys, yaws = self.drive_path.get()
-        end_xs = [a + math.cos(b) for (a,b) in zip(xs, yaws)]
-        end_ys = [a + math.sin(b) for (a,b) in zip(ys, yaws)]
-        return dict(x_start=xs, y_start=ys, x_end=end_xs, y_end=end_ys)
+        # return self.drive_path.getPointsAndArrow()
+        
+        return self.drive_path.getSegments()
     
     def updateData(self):
         # no update is required
         pass
     
     def registerRender(self, p):
-        p.add_layout(Arrow(end=OpenHead(size=3), source=self.source, x_start='x_start', y_start='y_start', x_end='x_end', y_end='y_end'))
-        p.line(source=self.source, x='x_start', y='y_start', line_width=3, line_color="#ffff00")
+        # p.add_layout(Arrow(end=OpenHead(size=3), source=self.source, x_start='x_start', y_start='y_start', x_end='x_end_arrow', y_end='y_end_arrow'))
+        # p.line(source=self.source, x='x_start', y='y_start', line_width=3, line_color="#ffff00")
+        
+        line_opts = dict(
+            line_width=5, line_color='colors', line_alpha=0.9,
+            hover_line_color='colors', hover_line_alpha=1.0
+        )
+        p.multi_line(source=self.source, xs='segment_xs', ys='segment_ys', **line_opts)
 
 class TrajDataSource:
     def __init__(self):
         self.x = [0.0, 0.0, 0.0]
         self.y = [0.0, 1.0, 2.0]
+        self.colors = ["ff0000", "00ff00", "#0000ff"]
         self.source = ColumnDataSource(self.get())
     
     def get(self):
-        return dict(x=self.x, y=self.y, sizes=np.ones(len(self.x)) * 2)
+        return dict(x=self.x, y=self.y, sizes=np.ones(len(self.x)) * 5, colors=self.colors)
     
-    def updateData(self, poses):
-        self.x = [pose.x for pose in poses]
-        self.y = [pose.y for pose in poses]
+    def updateData(self, traj):
+        self.x = [pose.x for pose in traj]
+        self.y = [pose.y for pose in traj]
+        self.colors = [Spectral7[::-1][pose.projection2drive_path_segment_idxs] for pose in traj]
         self.source.data = self.get()
     
     def registerRender(self, plot):
-        plot.circle(source=self.source, x="x", y="y", size="sizes", color="navy", alpha=0.5)
+        plot.circle(source=self.source, x="x", y="y", size="sizes", color="peachpuff", fill_color='colors', alpha=0.7)
