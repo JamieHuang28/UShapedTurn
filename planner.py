@@ -64,6 +64,10 @@ def InferByQuery(vm: VehicleModel, drive_path: DrivePath, end_point, kVelocity, 
 
         trace_poses.append(copy.copy(vm.pose))
         trace_projection2drive_path_segment_idxs.append(projection_segment_idx)
+    
+    if len(trace_poses) == 0:
+        trace_poses = [vm.pose]
+        trace_projection2drive_path_segment_idxs = [-1]
 
     return trace_poses, trace_projection2drive_path_segment_idxs
 

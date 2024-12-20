@@ -1,15 +1,22 @@
 # UShapedTurn
 a demo for u shaped turn
 
-typical u turn is decided by:
-1, the ending point
-2, the target lane width
-3, the foward space
+typical u turn is decided by: 1, the ending point; 2, the target lane width; 3, the foward space
 
-when reference path is involved, it works like a virtual ending point
+## setup
+python3.7
+```
+conda install --yes --file requirements.tx
+pip install easydict
+```
+or
+```
+pip install -r requirements.txt
+pip install easydict
+```
 
-
-construct scenarios: features, patterns
-devide function and implement
-
-add bokeh script for scenario generation
+## run
+```
+bokeh serve main.py
+```
+and open the link in browser

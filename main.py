@@ -25,10 +25,14 @@ from drive_path import DrivePath
 from bokeh.palettes import Spectral7
 
 # Set up data
+drive_path = DrivePath()
+
 kDefaultTargetLaneWidth = 10.0
 road_curb_data_source = RoadCurbDataSource(kDefaultTargetLaneWidth)
 
-kDefaultStartPoint = EasyDict(dict(x=6.0, y=-2.0, yaw=np.pi / 2, color=Spectral7[6]))
+# kDefaultStartPoint = EasyDict(dict(x=6.0, y=-2.0, yaw=np.pi / 2, color=Spectral7[6]))
+kDefaultStartPoint = drive_path.poses[0]
+kDefaultStartPoint.color = Spectral7[6]
 start_pose_data_source = PoseDataSource(kDefaultStartPoint)
 
 kDefaultEndPoint = EasyDict(dict(x=-6.0, y=-4.0, yaw=-np.pi / 2, color=Spectral7[0]))
@@ -36,7 +40,6 @@ end_pose_data_source = PoseDataSource(kDefaultEndPoint)
 
 turn_anchor_data_source = TurnAnchorDataSource()
 
-drive_path = DrivePath()
 drive_path_data_source = DrivePathDataSource(drive_path)
 traj_data_source = TrajDataSource()
 
@@ -66,18 +69,17 @@ target_lane_road_curb = Slider(
     step=0.2,
 )
 
-start_point_x = Slider(
-    title="start_point_x", value=kDefaultStartPoint.x, start=0.0, end=9.0, step=0.2
+start_point_idx = Slider(
+    title="start_point_idx", value=0, start=0, end=max(0, drive_path.numPoints()-1), step=int(1)
 )
-start_point_y = Slider(
-    title="start_point_y", value=kDefaultStartPoint.y, start=-20.0, end=20.0, step=0.2
+start_point_yaw_offset = Slider(
+    title="start_point_yaw_offset", value=0.0, start=-np.pi, end=np.pi, step=0.1
 )
-start_point_yaw = Slider(
-    title="start_point_yaw",
-    value=kDefaultStartPoint.yaw,
-    start=-np.pi,
-    end=np.pi,
-    step=0.1,
+start_point_lon_offset = Slider(
+    title="start_point_lon_offset", value=0.0, start=-5.0, end=5.0, step=0.1
+)
+start_point_lat_offset = Slider(
+    title="start_point_lat_offset", value=0.0, start=-2.0, end=2.0, step=0.1
 )
 
 end_point_x = Slider(
@@ -90,32 +92,64 @@ end_point_yaw = Slider(
     title="end_point_yaw", value=kDefaultEndPoint.yaw, start=-np.pi, end=np.pi, step=0.1
 )
 
+import math
+import copy
+
 
 def update_data(attrname, old, new):
+    def addOffset(
+        pose_ref,
+        yaw_offset_widget,
+        lon_offset_widget,
+        lat_offset_widget,
+    ):
+        # start_pose = copy.copy(start_pose_ref)
+        # start_pose.yaw = start_pose_ref.yaw + start_point_yaw_offset.value
+        # start_pose.x = start_pose_ref.x + start_point_lon_offset.value
+        # start_pose.y = start_pose_ref.y + start_point_lat_offset.value
+
+        pose = copy.copy(pose_ref)
+        pose.yaw = pose_ref.yaw + yaw_offset_widget.value
+        start_pose_x_offset = (
+            math.cos(pose.yaw) * lon_offset_widget.value
+            + -math.sin(pose.yaw) * lat_offset_widget.value
+        )
+        start_pose_y_offset = (
+            math.sin(pose.yaw) * lon_offset_widget.value
+            + math.cos(pose.yaw) * lat_offset_widget.value
+        )
+        pose.x = pose_ref.x + start_pose_x_offset
+        pose.y = pose_ref.y + start_pose_y_offset
+
+        return pose
+
     # Get the current slider values and update data source
     road_curb_data_source.updateData(target_lane_road_curb.value)
-    start_pose_data_source.updateData(
-        start_point_x.value, start_point_y.value, start_point_yaw.value
-    )
-    end_pose_data_source.updateData(
-        end_point_x.value, end_point_y.value, end_point_yaw.value
-    )
 
-    start_pose = EasyDict(
-        x=start_point_x.value, y=start_point_y.value, yaw=start_point_yaw.value
+    # start_pose = EasyDict(
+    #     x=start_point_x.value, y=start_point_y.value, yaw=start_point_yaw.value
+    # )
+    start_pose = addOffset(
+        drive_path.poses[start_point_idx.value],
+        start_point_yaw_offset,
+        start_point_lon_offset,
+        start_point_lat_offset,
     )
     end_pose = EasyDict(
         x=end_point_x.value, y=end_point_y.value, yaw=end_point_yaw.value
     )
+    start_pose_data_source.updateData(start_pose)
+    end_pose_data_source.updateData(end_pose)
     traj = Plan(start_pose, end_pose, drive_path)
     traj_data_source.updateData(traj)
 
 
 for w in [
+    start_point_idx,
+    start_point_yaw_offset,
+    start_point_lon_offset,
+    start_point_lat_offset,
     target_lane_road_curb,
-    start_point_x,
-    start_point_y,
-    start_point_yaw,
     end_point_x,
     end_point_y,
     end_point_yaw,
@@ -124,10 +158,11 @@ for w in [
 
 # Set up layouts and add to document
 inputs = column(
+    start_point_idx,
+    start_point_yaw_offset,
+    start_point_lon_offset,
+    start_point_lat_offset,
     target_lane_road_curb,
-    start_point_x,
-    start_point_y,
-    start_point_yaw,
     end_point_x,
     end_point_y,
     end_point_yaw,
