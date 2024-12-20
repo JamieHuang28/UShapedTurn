@@ -35,11 +35,11 @@ class PoseDataSource:
         self.yaw = default_dict.yaw
         self.color = default_dict.color
         self.source = ColumnDataSource(data=self.get())
-
-    def updateData(self, x, y, yaw):
-        self.x = x
-        self.y = y
-        self.yaw = yaw
+        
+    def updateData(self, pose):
+        self.x = pose.x
+        self.y = pose.y
+        self.yaw = pose.yaw
         self.source.data = self.get()
 
     def get(self):

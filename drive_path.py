@@ -13,11 +13,14 @@ class DrivePath:
         #      |        |
         # kParallel   kParallel
         #      |        |
-        self.turn_point = EasyDict(x=6.0, y=0.0, yaw=np.pi / 2)
-        self.return_point = EasyDict(x=-6.0, y=0.0, yaw=-np.pi / 2)
-        self.poses = []
         self.kHeight = 10.0
         self.kParallel = 5.0
+        self.turn_point = EasyDict(x=6.0, y=0.0, yaw=np.pi / 2)
+        self.return_point = EasyDict(x=-6.0, y=0.0, yaw=-np.pi / 2)
+        self.poses = self.getPoses()
+    
+    def numPoints(self):
+        return 5
 
     def get(self):
         xs = [
@@ -41,8 +44,11 @@ class DrivePath:
             self.return_point.yaw,
             self.return_point.yaw,
         ]
-        self.poses = [EasyDict(x=a, y=b, yaw=c) for (a, b, c) in zip(xs, ys, yaws)]
         return xs, ys, yaws
+    
+    def getPoses(self):
+        xs, ys, yaws = self.get()
+        return [EasyDict(x=a, y=b, yaw=c) for (a, b, c) in zip(xs, ys, yaws)]
 
     def getPointsAndArrow(self):
         xs, ys, yaws = self.get()
@@ -85,12 +91,12 @@ class DrivePath:
 if __name__ == "__main__":
     dp = DrivePath()
     print(
-        "expected steer is (1.0, 0.0, 0), result is: {}".format(
+        "expected return is (1.0, 0.0, 0), return is: {}".format(
             dp.Query(EasyDict(x=0.0, y=-1.0, yaw=0))
         )
     )
     print(
-        "expected steer is (1.0, 0.5, 1), result is: {}".format(
+        "expected return is (1.0, 0.5, 1), return is: {}".format(
             dp.Query(EasyDict(x=0.0, y=1.0, yaw=0))
         )
     )
