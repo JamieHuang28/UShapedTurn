@@ -68,17 +68,18 @@ class DrivePath:
         colors = Spectral7[::-1][0 : len(start_end_xs)]
         return dict(segment_xs=start_end_xs, segment_ys=start_end_ys, colors=colors)
 
-    def getProjectionIdx(self, pose):
+class UShapedTurnModel:
+    def __init__(self, drive_path: DrivePath):
+        self.turn_point = drive_path.turn_point
+    
+    def _getProjectionIdx(self, pose):
         # temporarily a very simple implementation
         if pose.y < self.turn_point.y:
             return 0
         return 1
-
-    def Query(self, pose):
-        """
-        'Query' is the concept of Transformer
-        """
-        projection_segment_idx = self.getProjectionIdx(pose)
+    
+    def decode(self, current_pose):
+        projection_segment_idx = self._getProjectionIdx(current_pose)
         steer_map = [0, 0.5, 0.5, 0]
         velocity_map = [1.0, 1.0, 1.0, 1.0]
         return (
@@ -87,16 +88,24 @@ class DrivePath:
             projection_segment_idx,
         )
 
+class PathDriver:
+    def __init__(self, model: UShapedTurnModel):
+        self.model = model
+    
+    def drive(self, pose):
+        return self.model.decode(pose)
 
 if __name__ == "__main__":
     dp = DrivePath()
+    model = UShapedTurnModel(dp)
+    pd = PathDriver(model)
     print(
         "expected return is (1.0, 0.0, 0), return is: {}".format(
-            dp.Query(EasyDict(x=0.0, y=-1.0, yaw=0))
+            pd.drive(EasyDict(x=0.0, y=-1.0, yaw=0))
         )
     )
     print(
         "expected return is (1.0, 0.5, 1), return is: {}".format(
-            dp.Query(EasyDict(x=0.0, y=1.0, yaw=0))
+            pd.drive(EasyDict(x=0.0, y=1.0, yaw=0))
         )
     )

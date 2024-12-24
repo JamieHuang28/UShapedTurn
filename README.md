@@ -4,15 +4,19 @@ a demo for u shaped turn
 typical u turn is decided by: 1, the ending point; 2, the target lane width; 3, the foward space
 
 ## setup
-python3.7
+install conda and create python3.7 environment
 ```
-conda install --yes --file requirements.tx
-pip install easydict
+conda create --name py37 python=3.7
+conda activate py37
 ```
-or
+install mini-forge
 ```
-pip install -r requirements.txt
-pip install easydict
+wget -O Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+bash Miniforge3.sh -bp "${HOME}/conda"
+```
+install dependencies
+```
+conda install --yes --file requirements.txt
 ```
 
 ## run

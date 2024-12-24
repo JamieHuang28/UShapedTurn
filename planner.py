@@ -47,10 +47,13 @@ def Dubins(start_pose, end_pose, curvature, step_size=0.1, selected_types=None):
     return [EasyDict(x=a, y=b, yaw=c) for (a, b, c) in zip(path_x, path_y, path_yaw)]
 
 
-from drive_path import DrivePath
+from drive_path import DrivePath, UShapedTurnModel, PathDriver
 
 
-def InferByQuery(vm: VehicleModel, drive_path: DrivePath, end_point, kVelocity, kDt):
+def Infer(vm: VehicleModel, drive_path: DrivePath, end_point, kVelocity, kDt):
+    u_shaped_turn_model = UShapedTurnModel(drive_path)
+    path_driver = PathDriver(u_shaped_turn_model)
+    
     kMaxTraceLength = 50
     trace_poses = []
     trace_projection2drive_path_segment_idxs = []
@@ -59,7 +62,7 @@ def InferByQuery(vm: VehicleModel, drive_path: DrivePath, end_point, kVelocity, 
     loop_i = 0
     while not isYawReached(vm.pose.yaw, end_point.yaw) and loop_i < kMaxLoop:
         loop_i += 1
-        velocity, steer, projection_segment_idx = drive_path.Query(vm.pose)
+        velocity, steer, projection_segment_idx = path_driver.drive(vm.pose)
         vm.drive(kVelocity, steer, kDt)
 
         trace_poses.append(copy.copy(vm.pose))
@@ -79,7 +82,7 @@ def Plan(start_point, end_point, drive_path):
     vm = VehicleModel()
     vm.initPose(start_point.x, start_point.y, start_point.yaw)
 
-    trace_poses, trace_projection2drive_path_segment_idxs = InferByQuery(
+    trace_poses, trace_projection2drive_path_segment_idxs = Infer(
         vm, drive_path, end_point, kVelocity, kDt
     )
 
