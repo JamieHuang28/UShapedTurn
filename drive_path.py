@@ -3,8 +3,27 @@ from easydict import EasyDict
 import math
 from bokeh.palettes import Spectral7
 
+from abc import ABC, abstractmethod
 
-class DrivePath:
+class DrivePath(ABC):
+    @abstractmethod
+    def numPoints(self):
+        pass
+    
+    @abstractmethod
+    def getPoses(self):
+        xs, ys, yaws = self.get()
+        return [EasyDict(x=a, y=b, yaw=c) for (a, b, c) in zip(xs, ys, yaws)]
+
+    @abstractmethod
+    def getPointsAndArrow(self):
+        pass
+
+    @abstractmethod
+    def getSegments(self):
+        pass
+
+class DrivePathFake(DrivePath):
     def __init__(self):
         #          /\
         #        kHeight
@@ -68,9 +87,36 @@ class DrivePath:
         colors = Spectral7[::-1][0 : len(start_end_xs)]
         return dict(segment_xs=start_end_xs, segment_ys=start_end_ys, colors=colors)
 
-class UShapedTurnModel:
-    def __init__(self, drive_path: DrivePath):
-        self.turn_point = drive_path.turn_point
+    def getTurnPoint(self):
+        return self.turn_point
+
+class DrivePathReal(DrivePath):
+    def __init__(self, data):
+        self.data = data
+    
+    def numPoints(self):
+        return len(self.data)
+    
+    def getPointsAndArrow(self):
+        return []
+
+    def getPoses(self):
+        return self.data
+    
+    def getSegments(self):
+        start_end_xs = [(pose[0].x, pose[1].x) for pose in zip(self.data[0:-1], self.data[1:])]
+        start_end_ys = [(pose[0].y, pose[1].y) for pose in zip(self.data[0:-1], self.data[1:])]
+        colors = Spectral7[::-1][0 : min(len(Spectral7), len(start_end_xs))]
+        return dict(segment_xs=start_end_xs, segment_ys=start_end_ys, colors=colors)
+
+class UShapedTurnModelInterface(ABC):
+    @abstractmethod
+    def decode(self, current_pose):
+        pass
+
+class UShapedTurnModel(UShapedTurnModelInterface):
+    def __init__(self, drive_path: DrivePathFake):
+        self.turn_point = drive_path.getTurnPoint()
     
     def _getProjectionIdx(self, pose):
         # temporarily a very simple implementation
@@ -96,7 +142,7 @@ class PathDriver:
         return self.model.decode(pose)
 
 if __name__ == "__main__":
-    dp = DrivePath()
+    dp = DrivePathFake()
     model = UShapedTurnModel(dp)
     pd = PathDriver(model)
     print(

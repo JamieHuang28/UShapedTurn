@@ -47,11 +47,10 @@ def Dubins(start_pose, end_pose, curvature, step_size=0.1, selected_types=None):
     return [EasyDict(x=a, y=b, yaw=c) for (a, b, c) in zip(path_x, path_y, path_yaw)]
 
 
-from drive_path import DrivePath, UShapedTurnModel, PathDriver
+from drive_path import DrivePath, UShapedTurnModelInterface, PathDriver
 
 
-def Infer(vm: VehicleModel, drive_path: DrivePath, end_point, kVelocity, kDt):
-    u_shaped_turn_model = UShapedTurnModel(drive_path)
+def Infer(vm: VehicleModel, u_shaped_turn_model: UShapedTurnModelInterface, end_point, kVelocity, kDt):
     path_driver = PathDriver(u_shaped_turn_model)
     
     kMaxTraceLength = 50
@@ -75,7 +74,7 @@ def Infer(vm: VehicleModel, drive_path: DrivePath, end_point, kVelocity, kDt):
     return trace_poses, trace_projection2drive_path_segment_idxs
 
 
-def Plan(start_point, end_point, drive_path):
+def Plan(start_point, end_point, u_shaped_turn_model):
     kVelocity = 1.0
     kDt = 0.4
     # print("plan {}->{}".format(start_point, end_point))
@@ -83,7 +82,7 @@ def Plan(start_point, end_point, drive_path):
     vm.initPose(start_point.x, start_point.y, start_point.yaw)
 
     trace_poses, trace_projection2drive_path_segment_idxs = Infer(
-        vm, drive_path, end_point, kVelocity, kDt
+        vm, u_shaped_turn_model, end_point, kVelocity, kDt
     )
 
     dubins_start_pose = trace_poses[-1]

@@ -8,6 +8,24 @@ from bokeh.palettes import Spectral7
 
 import math
 
+class LineDataSource:
+    def __init__(self):
+        self.xs = np.arange(3)
+        self.ys = np.arange(3)
+        self.source = ColumnDataSource(self.get())
+    
+    def get(self):
+        return dict(xs=self.xs, ys=self.ys)
+    
+    def updateData(self, points):
+        self.xs = [point.x for point in points]
+        self.ys = [point.y for point in points]
+        self.source.data = self.get()
+    
+    def registerRender(self, plot):
+        plot.line(
+            "xs", "ys", source=self.source, line_width=3, line_alpha=0.6, color="#0000ff"
+        )
 
 class RoadCurbDataSource:
     def __init__(self, defualt_lane_width):
@@ -33,7 +51,10 @@ class PoseDataSource:
         self.x = default_dict.x
         self.y = default_dict.y
         self.yaw = default_dict.yaw
-        self.color = default_dict.color
+        try:
+            self.color = default_dict.color
+        except:
+            self.color = "#000000"
         self.source = ColumnDataSource(data=self.get())
         
     def updateData(self, pose):
@@ -84,6 +105,32 @@ class TurnAnchorDataSource:
     def registerRender(self, plot):
         glyph = Dot(x="x", y="y", size="sizes", line_color="#dd1c77", fill_color=None)
         plot.add_glyph(self.source, glyph)
+
+
+class MultiLineDataSource:
+    def __init__(self, data):
+        self.data = data
+        self.source = ColumnDataSource(self.get())
+    
+    def get(self):
+        start_end_xs = [(segment.start.x, segment.end.x) for segment in self.data]
+        start_end_ys = [(segment.start.y, segment.end.y) for segment in self.data]
+        colors = [Spectral7[::-1][i%len(Spectral7)] for i in range(len(self.data))]
+        return dict(segment_xs=start_end_xs, segment_ys=start_end_ys, colors=colors)
+    
+    def updateData(self, data):
+        self.data = data
+        self.source.data = self.get()
+    
+    def registerRender(self, p):
+        line_opts = dict(
+            line_width=2,
+            line_color="colors",
+            line_alpha=0.9,
+            hover_line_color="colors",
+            hover_line_alpha=1.0,
+        )
+        p.multi_line(source=self.source, xs="segment_xs", ys="segment_ys", **line_opts)
 
 
 from drive_path import DrivePath

@@ -15,8 +15,9 @@ class PlotterImplInterface(ABC):
         pass
     
     @classmethod
+    @abstractmethod
     def show(self):
-        plt.show()
+        pass
 
 class DrawerAbstract(ABC):
     def __init__(self):

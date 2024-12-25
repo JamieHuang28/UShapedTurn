@@ -58,3 +58,6 @@ class MatPlotterImpl(PlotterImplInterface):
     def plotMultiLines(self, lines):
         mat_line_plotter = MatMultiLinesPlotter(lines)
         mat_line_plotter.render(self.ax)
+    
+    def show(self):
+        plt.show()

@@ -21,17 +21,18 @@ from data_sources import (
 )
 
 from planner import Plan
-from drive_path import DrivePath
+from drive_path import DrivePathFake, UShapedTurnModel
 from bokeh.palettes import Spectral7
 
 # Set up data
-drive_path = DrivePath()
+drive_path = DrivePathFake()
+u_shaped_turn_model = UShapedTurnModel(drive_path)
 
 kDefaultTargetLaneWidth = 10.0
 road_curb_data_source = RoadCurbDataSource(kDefaultTargetLaneWidth)
 
 # kDefaultStartPoint = EasyDict(dict(x=6.0, y=-2.0, yaw=np.pi / 2, color=Spectral7[6]))
-kDefaultStartPoint = drive_path.poses[0]
+kDefaultStartPoint = drive_path.getPoses()[0]
 kDefaultStartPoint.color = Spectral7[6]
 start_pose_data_source = PoseDataSource(kDefaultStartPoint)
 
@@ -130,7 +131,7 @@ def update_data(attrname, old, new):
     #     x=start_point_x.value, y=start_point_y.value, yaw=start_point_yaw.value
     # )
     start_pose = addOffset(
-        drive_path.poses[start_point_idx.value],
+        drive_path.getPoses()[start_point_idx.value],
         start_point_yaw_offset,
         start_point_lon_offset,
         start_point_lat_offset,
@@ -140,7 +141,7 @@ def update_data(attrname, old, new):
     )
     start_pose_data_source.updateData(start_pose)
     end_pose_data_source.updateData(end_pose)
-    traj = Plan(start_pose, end_pose, drive_path)
+    traj = Plan(start_pose, end_pose, u_shaped_turn_model)
     traj_data_source.updateData(traj)
 
 
