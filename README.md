@@ -19,6 +19,11 @@ install dependencies
 conda install --yes --file requirements.txt
 ```
 
+install pybind11
+```
+sudo apt update && sudo apt install pybind11-dev
+```
+
 ## run
 ```
 bokeh serve main.py

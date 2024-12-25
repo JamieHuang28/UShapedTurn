@@ -1,43 +1,48 @@
 import matplotlib
-
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
+
 import numpy as np
 from easydict import EasyDict
 
-from scene import getObjects
+from drawer_plotter_abstract import PlotterImplInterface, DrawerAbstract
+from mat_plotter_impl import MatPlotterImpl
 
-
-class RoadCurbPlotter:
+class LineDrawer(DrawerAbstract):
     def __init__(self, data: EasyDict):
         self.data = data
+    
+    def draw(self):
+        self.plotter.plotLine(self.data)
 
-    def render(self, ax):
-        for curb in self.data:
-            ax.plot([curb.start.x, curb.end.x], [curb.start.y, curb.end.y])
-
-
-class DrivePathPlotter:
+class MultiLinesDrawer(DrawerAbstract):
     def __init__(self, data: EasyDict):
         self.data = data
+    
+    def draw(self):
+        self.plotter.plotMultiLines(self.data)
 
-    def render(self, ax):
-        xs = []
-        ys = []
-        yaws = []
-        for pt in self.data:
-            xs.append(pt.x)
-            ys.append(pt.y)
-            yaws.append(pt.yaw)
-        ax.plot(xs, ys)
+class PoseDrawer(DrawerAbstract):
+    def __init__(self, data: EasyDict):
+        self.data = data
+    
+    def draw(self):
+        self.plotter.plotPose(self.data)
 
-
-# class StartPointPlotter:
-#     def __init__(self, data: EasyDict):
-#         self.data = data
-
-#     def render(self, ax):
-
+def drawUTurnInput(plotter_impl: PlotterImplInterface, uturn_input: EasyDict):
+    drawers = []
+    drawers.append(MultiLinesDrawer(uturn_input.road_curbs))
+    drawers.append(LineDrawer(uturn_input.drive_path))
+    drawers.append(PoseDrawer(uturn_input.start_point))
+    
+    for go_point in uturn_input.go_points:
+        go_point_drawer = PoseDrawer(go_point)
+        drawers.append(go_point_drawer)
+    
+    for drawer in drawers:
+        drawer.setPlotter(plotter_impl)
+        drawer.draw()
+    plotter_impl.show()
 
 if __name__ == "__main__":
     import json
@@ -51,35 +56,6 @@ if __name__ == "__main__":
         uturn_input = EasyDict(uturn_json)
 
     print(uturn_input.road_curbs[0].start)
-
-    fig, ax = plt.subplots()
-    rc_plotter = RoadCurbPlotter(uturn_input.road_curbs)
-    rc_plotter.render(ax)
-    drive_path_plotter = DrivePathPlotter(uturn_input.drive_path)
-    drive_path_plotter.render(ax)
-
-    ax.arrow(
-        uturn_input.start_point.x,
-        uturn_input.start_point.y,
-        math.cos(uturn_input.start_point.yaw),
-        math.sin(uturn_input.start_point.yaw),
-        width=0.1,
-        length_includes_head=True,
-        color="C2",
-    )
-    # go_points = EasyDict({'xs': [], 'ys': []})
-    for go_point in uturn_input.go_points:
-        ax.arrow(
-            go_point.x,
-            go_point.y,
-            math.cos(go_point.yaw),
-            math.sin(go_point.yaw),
-            width=0.1,
-            length_includes_head=True,
-            color="r",
-        )
-    # ax.scatter(go_points.xs, go_points.ys, '+')
-    ax.axis('equal')
-
-    plt.savefig("visualize.png")
-    plt.show()
+    
+    plotter_impl = MatPlotterImpl()
+    drawUTurnInput(plotter_impl, uturn_input)
