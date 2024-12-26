@@ -10,10 +10,13 @@ find_package(pybind11 REQUIRED)
 find_package(Eigen3)
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 
+add_subdirectory(thirdparty/hybrid_astar_algorithm)
+
 pybind11_add_module(${PROJECT_NAME} MODULE
     src/bindings.cc
     src/u_shaped_turn.cpp
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE ${pybind11_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE thirdparty/hybrid_astar_algorithm/include)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${pybind11_LIBRARIES} hybrid_astar_algorithm)
 
-add_executable(example src/example.cpp)
+add_executable(example_${PROJECT_NAME} src/example.cpp)

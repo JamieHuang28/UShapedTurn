@@ -1,0 +1,3 @@
+[submodule "thirdparty/hybrid_astar_algorithm"]
+	path = thirdparty/hybrid_astar_algorithm
+	url = git@github.com:JamieHuang28/hybrid_astar_algorithm.git

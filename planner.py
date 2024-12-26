@@ -15,10 +15,14 @@ def isYawReached(current, target):
         > 0
     )
 
+from abc import ABC, abstractmethod
+
+class PlannerInterface(ABC):
+    @abstractmethod
+    def plan(self, start_pose, end_pose, curvature=0.2, step_size=0.1):
+        pass
 
 from dubins_path_planner import plan_dubins_path
-
-
 def Dubins(start_pose, end_pose, curvature, step_size=0.1, selected_types=None):
     start_x = start_pose.x  # [m]
     start_y = start_pose.y  # [m]
@@ -45,11 +49,34 @@ def Dubins(start_pose, end_pose, curvature, step_size=0.1, selected_types=None):
         if m is not "S" and l > np.pi / curvature:
             return []
     return [EasyDict(x=a, y=b, yaw=c) for (a, b, c) in zip(path_x, path_y, path_yaw)]
+class DubinsPlanner(PlannerInterface):
+    def __init__(self):
+        pass
+    
+    def plan(self, start_pose, end_pose, curvature=0.2, step_size=0.1):
+        return Dubins(start_pose, end_pose, curvature, step_size)
 
+
+import os, sys
+sys.path.append("./")
+# add the path to the pybind11 module
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "./build/")))
+from u_shaped_turn import planHybridAStar
+
+class hybridAstarPlanner(PlannerInterface):
+    def __init__(self):
+        pass
+    
+    def plan(self, start_pose, end_pose, curvature=0.2, step_size=0.1):
+        width = max(start_pose.x, end_pose.x) + 1
+        height = max(start_pose.y, end_pose.y) + 1
+        nStart = np.array([start_pose.x, start_pose.y, start_pose.yaw, 0, 0])
+        nGoal = np.array([end_pose.x, end_pose.y, end_pose.yaw, 0, 0])
+        path = planHybridAStar(width, height, nStart, nGoal)
+        return [EasyDict(x=pt[0], y=pt[1], yaw=pt[2]) for pt in path]
+        
 
 from model import UShapedTurnModelInterface, PathDriver
-
-
 def Infer(vm: VehicleModel, u_shaped_turn_model: UShapedTurnModelInterface, end_point, kVelocity, kDt):
     path_driver = PathDriver(u_shaped_turn_model)
     
@@ -85,22 +112,25 @@ def Plan(start_point, end_point, u_shaped_turn_model):
         vm, u_shaped_turn_model, end_point, kVelocity, kDt
     )
 
-    dubins_start_pose = trace_poses[-1]
-    dubins_end_pose = end_point
-    dubins_path = Dubins(
-        dubins_start_pose,
-        dubins_end_pose,
+    post_start_pose = trace_poses[-1]
+    post_end_pose = end_point
+    
+    # post_planner = hybridAstarPlanner()
+    post_planner = DubinsPlanner()
+    post_path = post_planner.plan(
+        post_start_pose,
+        post_end_pose,
         math.tan(vm.max_delta) / vm.wheel_base,
         (kVelocity * kDt) / 5.0,
     )  # 5.0 due to bug in dubins lib
-    dubins_path_projection2drive_path_segment_idxs = [-1] * len(
-        dubins_path
+    post_path_projection2drive_path_segment_idxs = [-1] * len(
+        post_path
     )  # no projection is valid, so all fake as -1
 
-    traj = trace_poses + dubins_path
+    traj = trace_poses + post_path
     projection2drive_path_segment_idxs = (
         trace_projection2drive_path_segment_idxs
-        + dubins_path_projection2drive_path_segment_idxs
+        + post_path_projection2drive_path_segment_idxs
     )
     for pose, projection2drive_path_segment_idx in zip(
         traj, projection2drive_path_segment_idxs
