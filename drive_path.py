@@ -5,7 +5,7 @@ from bokeh.palettes import Spectral7
 
 from abc import ABC, abstractmethod
 
-class DrivePath(ABC):
+class DrivePathInterface(ABC):
     @abstractmethod
     def numPoints(self):
         pass
@@ -23,7 +23,7 @@ class DrivePath(ABC):
     def getSegments(self):
         pass
 
-class DrivePathFake(DrivePath):
+class DrivePathFake(DrivePathInterface):
     def __init__(self):
         #          /\
         #        kHeight
@@ -90,7 +90,7 @@ class DrivePathFake(DrivePath):
     def getTurnPoint(self):
         return self.turn_point
 
-class DrivePathReal(DrivePath):
+class DrivePath(DrivePathInterface):
     def __init__(self, data):
         self.data = data
     
@@ -106,52 +106,8 @@ class DrivePathReal(DrivePath):
     def getSegments(self):
         start_end_xs = [(pose[0].x, pose[1].x) for pose in zip(self.data[0:-1], self.data[1:])]
         start_end_ys = [(pose[0].y, pose[1].y) for pose in zip(self.data[0:-1], self.data[1:])]
-        colors = Spectral7[::-1][0 : min(len(Spectral7), len(start_end_xs))]
+        colors = [Spectral7[::-1][i%len(Spectral7)] for i in range(len(self.data))]
         return dict(segment_xs=start_end_xs, segment_ys=start_end_ys, colors=colors)
-
-class UShapedTurnModelInterface(ABC):
-    @abstractmethod
-    def decode(self, current_pose):
-        pass
-
-class UShapedTurnModel(UShapedTurnModelInterface):
-    def __init__(self, drive_path: DrivePathFake):
-        self.turn_point = drive_path.getTurnPoint()
-    
-    def _getProjectionIdx(self, pose):
-        # temporarily a very simple implementation
-        if pose.y < self.turn_point.y:
-            return 0
-        return 1
-    
-    def decode(self, current_pose):
-        projection_segment_idx = self._getProjectionIdx(current_pose)
-        steer_map = [0, 0.5, 0.5, 0]
-        velocity_map = [1.0, 1.0, 1.0, 1.0]
-        return (
-            velocity_map[projection_segment_idx],
-            steer_map[projection_segment_idx],
-            projection_segment_idx,
-        )
-
-class PathDriver:
-    def __init__(self, model: UShapedTurnModel):
-        self.model = model
-    
-    def drive(self, pose):
-        return self.model.decode(pose)
-
+            
 if __name__ == "__main__":
-    dp = DrivePathFake()
-    model = UShapedTurnModel(dp)
-    pd = PathDriver(model)
-    print(
-        "expected return is (1.0, 0.0, 0), return is: {}".format(
-            pd.drive(EasyDict(x=0.0, y=-1.0, yaw=0))
-        )
-    )
-    print(
-        "expected return is (1.0, 0.5, 1), return is: {}".format(
-            pd.drive(EasyDict(x=0.0, y=1.0, yaw=0))
-        )
-    )
+    pass

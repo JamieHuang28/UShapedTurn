@@ -21,12 +21,14 @@ from data_sources import (
 )
 
 from planner import Plan
-from drive_path import DrivePathFake, UShapedTurnModel
+from drive_path import DrivePathFake
+from model import UShapedTurnModelFake
+
 from bokeh.palettes import Spectral7
 
 # Set up data
 drive_path = DrivePathFake()
-u_shaped_turn_model = UShapedTurnModel(drive_path)
+u_shaped_turn_model = UShapedTurnModelFake(drive_path)
 
 kDefaultTargetLaneWidth = 10.0
 road_curb_data_source = RoadCurbDataSource(kDefaultTargetLaneWidth)

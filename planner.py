@@ -47,7 +47,7 @@ def Dubins(start_pose, end_pose, curvature, step_size=0.1, selected_types=None):
     return [EasyDict(x=a, y=b, yaw=c) for (a, b, c) in zip(path_x, path_y, path_yaw)]
 
 
-from drive_path import DrivePath, UShapedTurnModelInterface, PathDriver
+from model import UShapedTurnModelInterface, PathDriver
 
 
 def Infer(vm: VehicleModel, u_shaped_turn_model: UShapedTurnModelInterface, end_point, kVelocity, kDt):
@@ -108,13 +108,32 @@ def Plan(start_point, end_point, u_shaped_turn_model):
         pose.projection2drive_path_segment_idxs = projection2drive_path_segment_idx
     return traj
 
-
-if __name__ == "__main__":
+def basicExample():
     start_point = EasyDict(x=0.0, y=0.0, yaw=0.0)
     end_point = EasyDict(x=0.0, y=10.0, yaw=np.pi)
     dubins_path = Dubins(start_point, end_point, 3.0, 0.5)
     print(dubins_path[0], dubins_path[-1])
 
-    drive_path = DrivePath()
-    trace_poses = Plan(start_point, end_point, drive_path)
+    from drive_path import UShapedTurnModelFake, DrivePathFake
+    u_shaped_turn_model = UShapedTurnModelFake(DrivePathFake())
+    trace_poses = Plan(start_point, end_point, u_shaped_turn_model)
     print([pose.yaw for pose in trace_poses])
+
+if __name__ == "__main__":
+    # basicExample()
+    
+    import sys
+    from utils.file import parseInput
+    
+    uturn_input = parseInput(sys.argv[1])
+    
+    from model import UShapedTurnModel
+    from drive_path import DrivePath
+    
+    u_shaped_turn_model = UShapedTurnModel(DrivePath(uturn_input.drive_path))
+    # from drive_path import UShapedTurnModel, DrivePathFake
+    # u_shaped_turn_model = UShapedTurnModel(DrivePathFake())
+    
+    trace_poses = Plan(uturn_input.start_point, uturn_input.go_points[0], u_shaped_turn_model)
+    print([pose.yaw for pose in trace_poses])
+    

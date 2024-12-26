@@ -46,50 +46,27 @@ def drawUTurnInput(plotter_impl: PlotterImplInterface, uturn_input: EasyDict):
         drawer.draw()
 
 from planner import Plan
-from drive_path import DrivePath, DrivePathReal, UShapedTurnModelInterface
-
-class UShapeTurnModelReal(UShapedTurnModelInterface):
-    def __init__(self, drive_path: DrivePath):
-        self.drive_path = drive_path
-    
-    def decode(self, current_pose):
-        steer_map = [0.5, 0. -0.5]
-        steer_idx = 1
-        drive_path_poses = self.drive_path.getPoses()
-        if drive_path_poses[0].yaw > 1e-2:
-            steer_idx = 0
-        elif drive_path_poses[0].yaw < -1e-2:
-            steer_idx = 2
-        else:
-            steer_idx = 1
-        
-        return steer_map[steer_idx]
+from drive_path import DrivePath
+from model import UShapedTurnModel
 
 def planUTurn(plotter_impl: PlotterImplInterface, uturn_input: EasyDict):
-    # drawUTurnInput(plotter_impl, uturn_input)
+    drawUTurnInput(plotter_impl, uturn_input)
     start_pose = uturn_input.start_point
     
     trajs_drawers = []
-    for go_point in uturn_input.go_points:
-        end_pose = go_point
-        drive_path = DrivePathReal(uturn_input.drive_path)
-        model = UShapeTurnModelReal(drive_path)
+    for end_pose in uturn_input.go_points:
+        drive_path = DrivePath(uturn_input.drive_path)
+        model = UShapedTurnModel(drive_path)
         traj = Plan(start_pose, end_pose, model)
+        print("traj length of target {} is {}".format(end_pose, len(traj)))
         trajs_drawers.append(LineDrawer(traj))
     
     for traj_drawer in trajs_drawers:
         traj_drawer.setPlotter(plotter_impl)
-        traj_drawer.show()
+        traj_drawer.draw()
     plotter_impl.show()
 
-import json
-def parseInput(file_path):
-    uturn_input = EasyDict()
-    with open(file_path, "r") as f:
-        uturn_json = json.load(f)
-        uturn_input = EasyDict(uturn_json)
-    
-    return uturn_input
+from utils.file import parseInput
 
 # for bokeh only
 from bokeh_plotter_impl import BokehPlotter
@@ -101,16 +78,18 @@ def bokehPlotUTurnInput():
 
 bokehPlotUTurnInput()
 
+def testDrawInput(uturn_input):
+    plotter_impl = MatPlotterImpl()
+    drawUTurnInput(plotter_impl, uturn_input)
+    plotter_impl.show()
+
 if __name__ == "__main__":
     import math
     import sys
 
     uturn_input = parseInput(sys.argv[1])
-
-    print(uturn_input.road_curbs[0].start)
     
     plotter_impl = MatPlotterImpl()
-    drawUTurnInput(plotter_impl, uturn_input)
-    # planUTurn(plotter_impl, uturn_input)
+    planUTurn(plotter_impl, uturn_input)
     
     plotter_impl.show()

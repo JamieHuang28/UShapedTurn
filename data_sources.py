@@ -133,11 +133,11 @@ class MultiLineDataSource:
         p.multi_line(source=self.source, xs="segment_xs", ys="segment_ys", **line_opts)
 
 
-from drive_path import DrivePath
+from drive_path import DrivePathInterface
 
 
 class DrivePathDataSource:
-    def __init__(self, drive_path: DrivePath):
+    def __init__(self, drive_path: DrivePathInterface):
         self.drive_path = drive_path
         self.source = ColumnDataSource(self.get())
 
