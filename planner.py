@@ -9,10 +9,10 @@ def isYawReached(current, target):
     # # return if parallel
     # return abs(math.cos(a) - math.cos(b)) < 1e-2 and abs(math.sin(a) - math.sin(b)) < 1e-2
 
-    # return if perpendicular
+    # return if nearly codirection
     return (
-        abs(math.cos(current) * math.cos(target) + math.sin(current) * math.sin(target))
-        < 0.1
+        math.cos(current) * math.cos(target) + math.sin(current) * math.sin(target)
+        > 0
     )
 
 
@@ -54,8 +54,8 @@ def Infer(vm: VehicleModel, u_shaped_turn_model: UShapedTurnModelInterface, end_
     path_driver = PathDriver(u_shaped_turn_model)
     
     kMaxTraceLength = 50
-    trace_poses = []
-    trace_projection2drive_path_segment_idxs = []
+    trace_poses = [copy.copy(vm.pose)]
+    trace_projection2drive_path_segment_idxs = [0]
     kMaxLoop = int(kMaxTraceLength / kDt)
 
     loop_i = 0
