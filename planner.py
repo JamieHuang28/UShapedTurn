@@ -56,6 +56,18 @@ class DubinsPlanner(PlannerInterface):
     def plan(self, start_pose, end_pose, curvature=0.2, step_size=0.1):
         return Dubins(start_pose, end_pose, curvature, step_size)
 
+class MultiRadiusPlanner(PlannerInterface):
+    def __init__(self, divisions: int, once_planner: PlannerInterface):
+        self.divisions = divisions
+        self.once_planner = once_planner
+    
+    def plan(self, start_pose, end_pose, curvature=0.2, step_size=0.1):
+        for curv in np.arange(curvature / self.divisions, curvature, curvature / self.divisions):
+            path = self.once_planner.plan(start_pose, end_pose, curv)
+            if len(path) > 0:
+                return path
+        
+        return []
 
 import os, sys
 sys.path.append("./")
@@ -100,6 +112,23 @@ def Infer(vm: VehicleModel, u_shaped_turn_model: UShapedTurnModelInterface, end_
 
     return trace_poses, trace_projection2drive_path_segment_idxs
 
+class directionShotsPlanner(PlannerInterface):
+    def __init__(self, shot_steps: np.array, once_planner: PlannerInterface):
+        self.shot_steps = shot_steps
+        self.once_planner = once_planner
+    
+    def plan(self, start_pose, end_pose, curvature=0.2, step_size=0.1):
+        for step in self.shot_steps:
+            end_point_shoted = copy.copy(end_pose)
+            # extend end_point forward
+            end_point_shoted.x += math.cos(end_pose.yaw) * step
+            end_point_shoted.y += math.sin(end_pose.yaw) * step
+            
+            path = self.once_planner.plan(start_pose, end_point_shoted, curvature, step_size)
+            if len(path) > 0:
+                return path
+        
+        return []
 
 def Plan(start_point, end_point, u_shaped_turn_model):
     kVelocity = 1.0
@@ -115,8 +144,11 @@ def Plan(start_point, end_point, u_shaped_turn_model):
     post_start_pose = trace_poses[-1]
     post_end_pose = end_point
     
+    # post_planner = DubinsPlanner()
     # post_planner = hybridAstarPlanner()
-    post_planner = DubinsPlanner()
+    # post_planner = directionShotsPlanner(np.arange(0.0, 20.0, 1.0), DubinsPlanner())
+    # post_planner = MultiRadiusPlanner(5, DubinsPlanner())
+    post_planner = directionShotsPlanner(np.arange(0.0, 20.0, 1.0), MultiRadiusPlanner(5, DubinsPlanner()))
     post_path = post_planner.plan(
         post_start_pose,
         post_end_pose,
