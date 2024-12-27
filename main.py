@@ -18,6 +18,7 @@ from data_sources import (
     TurnAnchorDataSource,
     DrivePathDataSource,
     TrajDataSource,
+    HistogramDataSource
 )
 
 from planner import Plan
@@ -25,6 +26,8 @@ from drive_path import DrivePathFake
 from model import UShapedTurnModelFake
 
 from bokeh.palettes import Spectral7
+
+from bokeh.layouts import gridplot
 
 # Set up data
 drive_path = DrivePathFake()
@@ -46,6 +49,8 @@ turn_anchor_data_source = TurnAnchorDataSource()
 drive_path_data_source = DrivePathDataSource(drive_path)
 traj_data_source = TrajDataSource()
 
+calc_time_data_source = HistogramDataSource()
+
 # Set up plot
 plot = figure(
     height=400,
@@ -56,12 +61,23 @@ plot = figure(
     x_range=[-25.0, 25.0],
 )
 
+plot_h = figure(width=100, height=400, toolbar_location=None,
+                title="Time(ms)")
+plot_h.y_range.start = 0
+plot_h.y_range.end = 1000
+plot_h.x_range.start = 0
+plot_h.x_range.end = 2
+# plot_h.yaxis.axis_label = "calculate time"
+
+layout = gridplot([[plot, plot_h]], merge_tools=True)
+
 road_curb_data_source.registerRender(plot)
 start_pose_data_source.registerRender(plot)
 end_pose_data_source.registerRender(plot)
 turn_anchor_data_source.registerRender(plot)
 drive_path_data_source.registerRender(plot)
 traj_data_source.registerRender(plot)
+calc_time_data_source.registerRender(plot_h)
 
 # set up widgets
 target_lane_road_curb = Slider(
@@ -97,7 +113,7 @@ end_point_yaw = Slider(
 
 import math
 import copy
-
+import datetime
 
 def update_data(attrname, old, new):
     def addOffset(
@@ -143,8 +159,13 @@ def update_data(attrname, old, new):
     )
     start_pose_data_source.updateData(start_pose)
     end_pose_data_source.updateData(end_pose)
+    
+    ts_start = datetime.datetime.now()
     traj = Plan(start_pose, end_pose, u_shaped_turn_model)
+    ts_end = datetime.datetime.now()
     traj_data_source.updateData(traj)
+    
+    calc_time_data_source.updateData((ts_end - ts_start).microseconds)
 
 
 for w in [
@@ -171,7 +192,7 @@ inputs = column(
     end_point_yaw,
 )
 
-curdoc().add_root(row(inputs, plot, width=800))
+curdoc().add_root(row(inputs, layout, width=800))
 curdoc().title = "UShapedTurn"
 
 # from bokeh.io import show

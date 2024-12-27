@@ -194,3 +194,22 @@ class TrajDataSource:
             fill_color="colors",
             alpha=0.7,
         )
+
+class HistogramDataSource:
+    def __init__(self):
+        self.top = [0.0]
+        self.left = [0.5]
+        self.right = [1.5]
+        self.source = ColumnDataSource(self.get())
+    
+    def updateData(self, top):
+        self.top[0] = top
+        self.source.data = self.get()
+    
+    def get(self):
+        return dict(top=self.top, left=self.left, right=self.right)
+
+    def registerRender(self, p):
+        # Histogram
+        p.quad(source=self.source, top='top', bottom=0, left='left', right='right',
+                fill_color="skyblue", line_color="white")

@@ -148,7 +148,7 @@ def Plan(start_point, end_point, u_shaped_turn_model):
     # post_planner = hybridAstarPlanner()
     # post_planner = directionShotsPlanner(np.arange(0.0, 20.0, 1.0), DubinsPlanner())
     # post_planner = MultiRadiusPlanner(5, DubinsPlanner())
-    post_planner = directionShotsPlanner(np.arange(0.0, 20.0, 1.0), MultiRadiusPlanner(5, DubinsPlanner()))
+    post_planner = directionShotsPlanner(np.arange(0.0, 20.0, 2.0), MultiRadiusPlanner(3, DubinsPlanner()))
     post_path = post_planner.plan(
         post_start_pose,
         post_end_pose,
