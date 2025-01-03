@@ -1,10 +1,11 @@
 #include <cstring>
+#include <iostream>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/eigen.h>
 #include <vector>
 #include "u_shaped_turn.h"
-#include "planner.h"
+#include "hybrid_astar_algorithm/include/planner.h"
 
 namespace py = pybind11;
 

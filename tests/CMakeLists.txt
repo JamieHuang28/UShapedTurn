@@ -41,6 +41,7 @@ add_executable(
 target_link_libraries(
     unittest
     gtest_main
+    libu_shaped_turn
     )
 
 add_test(

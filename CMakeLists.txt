@@ -12,11 +12,24 @@ include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 
 add_subdirectory(thirdparty/hybrid_astar_algorithm)
 
+add_library(lib${PROJECT_NAME}
+    src/vehicle.cpp
+    src/planner.cpp
+    src/plan_agent.cpp
+    src/neural_model.cpp
+    src/path_planner.cpp
+    src/drive_path.cpp
+    src/stage_checker.cpp
+)
+target_include_directories(lib${PROJECT_NAME} PRIVATE src/)
+target_include_directories(lib${PROJECT_NAME} PUBLIC include/)
+
 pybind11_add_module(${PROJECT_NAME} MODULE
     src/bindings.cc
     src/u_shaped_turn.cpp
 )
-target_include_directories(${PROJECT_NAME} PRIVATE thirdparty/hybrid_astar_algorithm/include)
+target_include_directories(${PROJECT_NAME} PRIVATE thirdparty/ src/)
+target_include_directories(${PROJECT_NAME} PUBLIC include/)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${pybind11_LIBRARIES} hybrid_astar_algorithm)
 
 add_executable(example_${PROJECT_NAME} src/example.cpp)
