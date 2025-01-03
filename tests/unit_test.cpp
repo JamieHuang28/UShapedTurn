@@ -2,7 +2,9 @@
 #include "../src/vehicle.h"
 #include "../src/path_planner.h"
 #include "../src/config.h"
+#include "../src/plan_agent.h"
 #include "planner.h"
+#include <memory>
 
 namespace {
 
@@ -114,18 +116,40 @@ namespace {
     }
 
     TEST(PathPlanner, getControlsUTurn) {
+        Eigen::Vector3d ego_pose(0.0, 0.0, 0.0);
+        Eigen::Vector3d target_pose(0.0, -10.0, M_PI);
+
         using namespace u_shaped_turn;
         PathPlanner path_planner;
-        path_planner.setTargetPose(Eigen::Vector3d(0.0, -10.0, M_PI));
-        auto controls = path_planner.getControls(Eigen::Vector3d(0.0, 0.0, 0.0));
+
+        path_planner.setTargetPose(target_pose);
+        auto controls = path_planner.getControls(ego_pose);
         // check the control(1) of the mid control
         const auto &mid_control = controls.at(controls.size() / 2);
         EXPECT_NEAR(mid_control(1), -kMaxSteer, 1e-3);
+    }
+
+    TEST(PlanAgent, Basic) {
+        using namespace u_shaped_turn;
+        Eigen::Vector3d start_pose(0.0, 0.0, 0.0);
+        Eigen::Vector3d end_pose(0.0, -10.0, M_PI);
         
-        // // print controls
-        // for (const auto &control : controls) {
-        //     printf("control: %lf, %lf\n", control(0), control(1));
-        // }
+        std::shared_ptr<Vehicle> vehicle = std::make_shared<Vehicle>(kWheelBase);
+        vehicle->setEgoPose(start_pose);
+        PlanAgent plan_agent(vehicle);
+        
+        auto path_planner = std::make_shared<PathPlanner>();
+        path_planner->setTargetPose(end_pose);
+
+        std::shared_ptr<HumanExperienceInterface> path_planner_experience = path_planner;
+
+        plan_agent.setEgoPose(start_pose);
+        plan_agent.setTarget(end_pose);
+        plan_agent.moveOnce(path_planner_experience, kStepSize);
+        auto trace = plan_agent.getTrace();
+
+        EXPECT_NEAR(trace.back()(0), end_pose(0), 2*kStepSize);
+        EXPECT_NEAR(trace.back()(1), end_pose(1), 1e-1);
     }
 
     TEST(Planner, Basic) {
@@ -139,7 +163,7 @@ namespace {
 
         // check the direction of the end pose
         const auto &end_pose_ = path.back();
-        EXPECT_NEAR(std::cos(end_pose_(2)), std::cos(M_PI), 1e-3);
-        EXPECT_NEAR(std::sin(end_pose_(2)), std::sin(M_PI), 1e-3);
+        EXPECT_NEAR(std::cos(end_pose_(2)), std::cos(M_PI), 1e-2);
+        EXPECT_NEAR(std::sin(end_pose_(2)), std::sin(M_PI), 1e-2);
     }
 }

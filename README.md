@@ -23,7 +23,10 @@ install pybind11
 ```
 sudo apt update && sudo apt install pybind11-dev
 ```
-
+install libboost-serialization-dev
+```
+sudo apt install libboost-serialization-dev
+```
 ## run
 ```
 bokeh serve main.py

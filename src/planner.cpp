@@ -20,12 +20,14 @@ Planner::~Planner()
 }
 
 inline bool isEgoNearTarget(const Eigen::Vector3d &ego_pose, const Eigen::Vector3d &target_pose) {
-    return (ego_pose - target_pose).norm() < kStepSize;
+    double inner_product = ego_pose.head(2).dot(target_pose.head(2));
+    return (ego_pose - target_pose).norm() < 2*kStepSize && inner_product > std::cos(0.1);
 }
 
 std::vector<Eigen::Vector3d> Planner::plan(const Eigen::Vector3d start_pose, const Eigen::Vector3d target_pose, const DrivePath &drive_path) {
     constexpr double step_size = kStepSize;
     std::shared_ptr<HumanExperienceInterface> neural_model_experience = std::make_shared<NeuralModel>(drive_path);
+    
     auto path_planner = std::make_shared<PathPlanner>();
     path_planner->setTargetPose(target_pose);
     std::shared_ptr<HumanExperienceInterface> path_planner_experience = path_planner;
@@ -38,13 +40,14 @@ std::vector<Eigen::Vector3d> Planner::plan(const Eigen::Vector3d start_pose, con
     plan_agent.setTarget(target_pose);
 
     int iter = 0;
-    while (!isEgoNearTarget(plan_agent.getEgoPose(), target_pose) && iter++ < 1000) {
+    while (!isEgoNearTarget(plan_agent.getEgoPose(), target_pose) && iter++ < 1) {
         if (!StageChecker::check(plan_agent.getEgoPose(), target_pose)) {
             plan_agent.moveOnce(neural_model_experience, step_size);
         } else {
             plan_agent.moveOnce(path_planner_experience, step_size);
         }
     }
+    printf("iter: %d\n", iter);
     
     return plan_agent.getTrace();
 }

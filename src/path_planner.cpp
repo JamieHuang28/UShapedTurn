@@ -7,6 +7,7 @@ namespace u_shaped_turn
 {
 
 PathPlanner::PathPlanner(/* args */)
+    : is_target_pose_set_(false)
 {
 }
 
@@ -15,6 +16,10 @@ PathPlanner::~PathPlanner()
 }
 
 std::vector<Eigen::Vector2d> PathPlanner::getControls(const Eigen::Vector3d &ego_pose) const {
+    if (!is_target_pose_set_) {
+        throw std::runtime_error("Target pose is not set");
+    }
+    
     using namespace HybridAStar;
     // implement with dubins path
     double q0[] = {ego_pose[0], ego_pose[1], ego_pose[2]};
@@ -45,7 +50,8 @@ std::vector<Eigen::Vector2d> PathPlanner::getControls(const Eigen::Vector3d &ego
     // for every segment of DubinsPath
     for (int i = 0; i < 3; ++i) {
         double t = 0.0;
-        while (t < path.param[i]) {
+        // printf("param[%d]: %lf\n", i, path.param[i]);
+        while (t < path.param[i] * rho) {
             dubins_path_sample(&path, t, q);
             Eigen::Vector2d control;
             control[0] = 1.0;

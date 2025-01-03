@@ -1,6 +1,7 @@
 #include "vehicle.h"
 #include <cmath>
 #include <algorithm>
+#include "config.h"
 
 namespace u_shaped_turn
 {
@@ -21,14 +22,19 @@ std::vector<Eigen::Vector3d> Vehicle::move(const std::vector<Eigen::Vector2d> co
         return std::vector<Eigen::Vector3d>();
     }
 
-    // for (const Eigen::Vector2d &control : controls) {
-    //     ego_pose_ = calcKinetic(ego_pose_, control, 0.1);
+    // // print controls
+    // for (const auto &control : controls) {
+    //     printf("control: %lf, %lf\n", control(0), control(1));
     // }
 
-    std::transform(controls.begin(), controls.end(), trace.begin(), [this](const Eigen::Vector2d &control) {
-        this->ego_pose_ = Vehicle::calcKinetic(this->ego_pose_, control, this->wheel_base_, 0.1);
+    std::transform(controls.begin(), controls.end(), trace.begin(), [this, kStepSize](const Eigen::Vector2d &control) {
+        this->ego_pose_ = Vehicle::calcKinetic(this->ego_pose_, control, this->wheel_base_, kStepSize);
         return this->ego_pose_;
     });
+    // // print the trace
+    // for (const auto &pose : trace) {
+    //     printf("pose: %lf, %lf, %lf\n", pose(0), pose(1), pose(2));
+    // }
 
     return trace;
 }
