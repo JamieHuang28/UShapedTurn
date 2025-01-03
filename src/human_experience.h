@@ -7,6 +7,7 @@ namespace u_shaped_turn
 class HumanExperienceInterface
 {
 public:
+    HumanExperienceInterface() = default;
     virtual ~HumanExperienceInterface() = default;
 
     virtual std::vector<Eigen::Vector2d> getControls(const Eigen::Vector3d &ego_pose) const = 0;

@@ -12,7 +12,7 @@ public:
     StageChecker();
     ~StageChecker();
     static bool check(const Eigen::Vector3d &start_pose, const Eigen::Vector3d &target_pose) {
-        return false;
+        return true;
     }
 };
 

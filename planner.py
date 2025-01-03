@@ -1,3 +1,9 @@
+import os, sys
+
+sys.path.append("./")
+# add the path to the pybind11 module
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "./build/")))
+
 from vehicle_model import VehicleModel
 from easydict import EasyDict
 import numpy as np
@@ -68,6 +74,15 @@ class MultiRadiusPlanner(PlannerInterface):
                 return path
         
         return []
+
+from u_shaped_turn import planUShapedTurn
+class UShapedTurnPlanner(PlannerInterface):
+    def __init__(self):
+        pass
+    
+    def plan(self, start_pose, end_pose, curvature=0.2, step_size=0.1):
+        trace = planUShapedTurn(start_pose, end_pose)
+        return [EasyDict(x=pt[0], y=pt[1], yaw=pt[2]) for pt in trace]
 
 import os, sys
 sys.path.append("./")
@@ -148,7 +163,8 @@ def Plan(start_point, end_point, u_shaped_turn_model):
     # post_planner = hybridAstarPlanner()
     # post_planner = directionShotsPlanner(np.arange(0.0, 20.0, 1.0), DubinsPlanner())
     # post_planner = MultiRadiusPlanner(5, DubinsPlanner())
-    post_planner = directionShotsPlanner(np.arange(0.0, 20.0, 2.0), MultiRadiusPlanner(3, DubinsPlanner()))
+    # post_planner = directionShotsPlanner(np.arange(0.0, 20.0, 2.0), MultiRadiusPlanner(3, DubinsPlanner()))
+    post_planner = directionShotsPlanner(np.arange(0.0, 20.0, 2.0), MultiRadiusPlanner(3, UShapedTurnPlanner()))
     post_path = post_planner.plan(
         post_start_pose,
         post_end_pose,
