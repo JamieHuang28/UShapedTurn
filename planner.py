@@ -81,7 +81,9 @@ class UShapedTurnPlanner(PlannerInterface):
         pass
     
     def plan(self, start_pose, end_pose, curvature=0.2, step_size=0.1):
-        trace = planUShapedTurn(start_pose, end_pose)
+        start_pose_values = np.array([start_pose.x, start_pose.y, start_pose.yaw])
+        end_pose_values = np.array([end_pose.x, end_pose.y, end_pose.yaw])
+        trace = planUShapedTurn(start_pose_values, end_pose_values)
         return [EasyDict(x=pt[0], y=pt[1], yaw=pt[2]) for pt in trace]
 
 import os, sys

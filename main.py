@@ -69,7 +69,7 @@ plot_h.x_range.start = 0
 plot_h.x_range.end = 2
 # plot_h.yaxis.axis_label = "calculate time"
 
-layout = gridplot([[plot, plot_h]], merge_tools=True)
+layout = gridplot([[plot, plot_h]], merge_tools=False)
 
 road_curb_data_source.registerRender(plot)
 start_pose_data_source.registerRender(plot)
