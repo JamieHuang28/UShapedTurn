@@ -29,3 +29,9 @@ sudo apt update && sudo apt install pybind11-dev
 bokeh serve main.py
 ```
 and open the link in browser
+
+## test
+please refer to [gtest-demo](https://github.com/yecharlie/gtest-demo) when issue occurs
+```
+./tests/unittest
+```

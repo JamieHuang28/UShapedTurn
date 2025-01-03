@@ -20,3 +20,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE thirdparty/hybrid_astar_algor
 target_link_libraries(${PROJECT_NAME} PRIVATE ${pybind11_LIBRARIES} hybrid_astar_algorithm)
 
 add_executable(example_${PROJECT_NAME} src/example.cpp)
+
+# gtest related
+enable_testing()
+add_subdirectory(tests)
